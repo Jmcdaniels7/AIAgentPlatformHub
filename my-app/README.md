@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+# AgenticAIPlatformHub
+
+A modern React application built with Vite and TypeScript for integrating microserviced AI agents into main AI Agent Platform
+
+## DISCLAIMER
+Please do not alter configuration of commited version, .gitignore is in place to ignore node_modules and npm dependencies as well
+please ensure you are not commiting your virtual enviroment(if you use one) to the github repo(utilize .gitignore file)
+No branches needed as we probably want to work asychrously and quickly
+
 ## Getting Started
 
 First, run the development server:
