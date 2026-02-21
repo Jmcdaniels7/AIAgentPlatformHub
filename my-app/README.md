@@ -4,6 +4,22 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 A modern React application built with Vite and TypeScript for integrating microserviced AI agents into main AI Agent Platform
 
+Client Request
+   ↓
+Gateway LLM (decides which agents to call)
+   ↓
+Read-Only MCP Agents(paired to help call tools for better insight(gmail, weather api, slack, etc.))
+   ↓
+Gather insights (APIs, vector DB, analytics)
+   ↓
+Intermediate Task Created
+   ↓
+Task Approved ✅
+   ↓
+Write-Only MCP Agents(paired to help execute API endpoints without writing logic in frontend)
+   ↓
+Execute actions (DB/API updates, notifications)
+
 ## DISCLAIMER
 Please do not alter configuration of commited version, .gitignore is in place to ignore node_modules and npm dependencies as well
 please ensure you are not commiting your virtual enviroment(if you use one) to the github repo(utilize .gitignore file)
