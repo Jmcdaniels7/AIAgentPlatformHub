@@ -12,6 +12,8 @@ interface ChatInterfaceProps {
   domain: Domain | null;
 }
 
+//on refresh chat interfaces are cleared, tasks are cleared, only persistance happening is tasks, pending tasks for that account
+//  will appear in task feed 
 export function ChatInterface({ domain }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -103,7 +105,7 @@ export function ChatInterface({ domain }: ChatInterfaceProps) {
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-md">
             <Bot className="w-5 h-5 text-white" />
           </div>
-          <h2 className="font-bold text-gray-900">AI Chatbot</h2>
+          <h2 className="font-bold text-gray-900">{domainConfig?.name || 'AI Assistant'}</h2>
         </div>
       </div>
 

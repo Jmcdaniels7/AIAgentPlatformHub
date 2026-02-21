@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Domain } from './types';
 import { TaskFeed } from './components/TaskFeed';
-import { DomainAgent } from './components/DomainAgent';
 import { ChatInterface } from './components/ChatInterface';
 import { Button } from '@/components/ui/button';
 import { updateTaskStatus, domainConfigs } from './utils/storage';
@@ -98,7 +97,6 @@ export default function MainInterface() {
         {/* Right: Chat Interface */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden">
           <ChatInterface domain={selectedDomain} />
-          <DomainAgent domain={selectedDomain} config={domainConfigs[selectedDomain]} />
         </div>
       </div>
     </div>

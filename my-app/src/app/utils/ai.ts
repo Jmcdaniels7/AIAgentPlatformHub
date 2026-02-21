@@ -5,106 +5,15 @@ import { addTask } from './storage';
 export function generateTaskFromMessage(domain: Domain, userMessage: string): Task | null {
   const lowerMessage = userMessage.toLowerCase();
   
-  // Sales domain
-  if (domain === 'sales') {
-    if (lowerMessage.includes('email') || lowerMessage.includes('reach out') || lowerMessage.includes('contact')) {
-      return addTask({
-        domain,
-        type: 'email',
-        title: 'Draft outreach email',
-        description: extractTaskDescription(userMessage),
-        status: 'pending',
-        details: {
-          recipient: extractRecipient(userMessage),
-          priority: 'medium',
-          notes: userMessage
-        }
-      });
-    }
-    if (lowerMessage.includes('follow up') || lowerMessage.includes('follow-up')) {
-      return addTask({
-        domain,
-        type: 'follow-up',
-        title: 'Schedule follow-up',
-        description: extractTaskDescription(userMessage),
-        status: 'pending',
-        details: {
-          priority: 'high',
-          notes: userMessage
-        }
-      });
-    }
-  }
+  // Gateway Agent(Risk-management and Operations) needs results to populate task fields
   
-  // Customer Service domain
-  if (domain === 'customer-service') {
-    if (lowerMessage.includes('email') || lowerMessage.includes('respond') || lowerMessage.includes('reply')) {
-      return addTask({
-        domain,
-        type: 'email',
-        title: 'Customer support response',
-        description: extractTaskDescription(userMessage),
-        status: 'pending',
-        details: {
-          recipient: extractRecipient(userMessage),
-          priority: determinePriority(userMessage),
-          notes: userMessage
-        }
-      });
-    }
-  }
   
-  // Operations domain
-  if (domain === 'operations') {
-    if (lowerMessage.includes('schedule') || lowerMessage.includes('reschedule')) {
-      return addTask({
-        domain,
-        type: 'reschedule',
-        title: 'Update schedule',
-        description: extractTaskDescription(userMessage),
-        status: 'pending',
-        details: {
-          scheduledDate: extractDate(userMessage),
-          priority: 'medium',
-          notes: userMessage
-        }
-      });
-    }
-    if (lowerMessage.includes('reorder') || lowerMessage.includes('order') || lowerMessage.includes('inventory')) {
-      return addTask({
-        domain,
-        type: 'reorder',
-        title: 'Process reorder',
-        description: extractTaskDescription(userMessage),
-        status: 'pending',
-        details: {
-          quantity: extractQuantity(userMessage),
-          priority: 'high',
-          notes: userMessage
-        }
-      });
-    }
-  }
+  // Risk Management domain needs results to populate task fields
   
-  // Maintenance domain
-  if (domain === 'maintenance') {
-    if (lowerMessage.includes('maintenance') || lowerMessage.includes('repair') || lowerMessage.includes('inspect')) {
-      return addTask({
-        domain,
-        type: 'maintenance',
-        title: 'Schedule maintenance',
-        description: extractTaskDescription(userMessage),
-        status: 'pending',
-        details: {
-          scheduledDate: extractDate(userMessage),
-          priority: determinePriority(userMessage),
-          notes: userMessage
-        }
-      });
-    }
-  }
   
-  return null;
+  // Operations domain needs results to populate task fields
+  
+    
 }
 
 function extractTaskDescription(message: string): string {
@@ -148,7 +57,7 @@ function determinePriority(message: string): 'low' | 'medium' | 'high' {
 export function generateAIResponse(domain: Domain, userMessage: string): string {
   const lowerMessage = userMessage.toLowerCase();
   
-  if (domain === 'sales') {
+  if (domain === 'gateway') {
     if (lowerMessage.includes('email') || lowerMessage.includes('outreach')) {
       return "I've created a draft outreach email task for your review. The email will be personalized based on the prospect's background and your value proposition. You can review and approve it in the task panel.";
     }
@@ -158,7 +67,7 @@ export function generateAIResponse(domain: Domain, userMessage: string): string 
     return "I'm here to help with sales outreach, follow-ups, and deal analysis. What would you like me to assist with?";
   }
   
-  if (domain === 'customer-service') {
+  if (domain === 'risk-management') {
     if (lowerMessage.includes('respond') || lowerMessage.includes('email')) {
       return "I've prepared a customer support response for your review. The response addresses their concerns while maintaining our brand voice and support standards.";
     }
@@ -175,12 +84,8 @@ export function generateAIResponse(domain: Domain, userMessage: string): string 
     return "I'm here to help with scheduling, inventory management, and operational coordination. What do you need?";
   }
   
-  if (domain === 'maintenance') {
-    if (lowerMessage.includes('maintenance') || lowerMessage.includes('repair')) {
-      return "I've scheduled a maintenance task and will coordinate with the maintenance team. The task includes all necessary details for completion and tracking.";
-    }
-    return "I can help schedule maintenance, track repairs, and manage preventive maintenance. What would you like me to do?";
-  }
+  
   
   return "How can I assist you today?";
 }
+

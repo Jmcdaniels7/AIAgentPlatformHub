@@ -5,16 +5,16 @@ const MESSAGES_KEY = 'ai-agent-messages';
 
 export const domainConfigs: DomainConfig[] = [
   {
-    id: 'sales',
-    name: 'Sales',
+    id: 'gateway',
+    name: 'Logistics AI agent',
     description: 'Handle outreach, follow-ups, and deal management',
     color: 'bg-blue-500',
     icon: '💼',
-    systemPrompt: 'You are a sales AI assistant. Help with customer outreach, follow-ups, deal analysis, and sales coordination.'
+    systemPrompt: 'You are a logistics AI assistant. Help with risk-management and operation domains.'
   },
   {
-    id: 'customer-service',
-    name: 'Customer Service',
+    id: 'risk-management',
+    name: 'Risk Management AI Agent',
     description: 'Manage support tickets and customer communications',
     color: 'bg-green-500',
     icon: '🎧',
@@ -22,20 +22,12 @@ export const domainConfigs: DomainConfig[] = [
   },
   {
     id: 'operations',
-    name: 'Operations',
+    name: 'Operations AI Agent',
     description: 'Coordinate schedules, reorders, and logistics',
     color: 'bg-purple-500',
     icon: '⚙️',
     systemPrompt: 'You are an operations AI assistant. Help with scheduling, inventory reorders, logistics coordination, and operational efficiency.'
   },
-  {
-    id: 'maintenance',
-    name: 'Maintenance',
-    description: 'Schedule and track maintenance tasks',
-    color: 'bg-orange-500',
-    icon: '🔧',
-    systemPrompt: 'You are a maintenance AI assistant. Help with equipment maintenance scheduling, preventive maintenance, and repair coordination.'
-  }
 ];
 
 export function getTasks(): Task[] {
