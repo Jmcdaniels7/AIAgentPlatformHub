@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Domain } from './types';
 import { TaskFeed } from './components/TaskFeed';
+import { DomainAgent } from './components/DomainAgent';
 import { ChatInterface } from './components/ChatInterface';
 import { Button } from '@/components/ui/button';
 import { updateTaskStatus, domainConfigs } from './utils/storage';
@@ -10,7 +11,8 @@ import Link from 'next/link';
 import { Database, Sparkles } from 'lucide-react';
 
 export default function MainInterface() {
-  const [selectedDomain, setSelectedDomain] = useState<Domain>('sales');
+  //
+  const [selectedDomain, setSelectedDomain] = useState<Domain>('gateway');
 
   const handleTaskStatusChange = (taskId: string, status: any) => {
     updateTaskStatus(taskId, status);
@@ -36,17 +38,23 @@ export default function MainInterface() {
       {/* Modern Navigation Bar */}
       <nav className="bg-gradient-to-r from-amber-50 to-yellow-50 border-b border-amber-200/50 px-6 py-4 shadow-sm">
         <div className="flex items-center justify-center gap-2 text-sm font-medium">
-          <Link
-            href="/"
-            className="px-4 py-2 hover:bg-white/60 rounded-xl transition-all duration-200 text-gray-700 hover:text-blue-600 hover:shadow-md"
+          <button
+            onClick={() => setSelectedDomain('gateway')}
+            className={`px-4 py-2 rounded-xl transition-all duration-200 hover:shadow-md ${
+              selectedDomain === 'gateway' 
+                ? 'bg-white text-blue-600 shadow-md' 
+                : 'hover:bg-white/60 text-gray-700 hover:text-blue-600'
+            }`}
           >
             Home
-          </Link>
+          </button>
+
+
           <span className="text-gray-400">|</span>
           <button
-            onClick={() => setSelectedDomain('operations')}
+            onClick={() => setSelectedDomain('risk-management')}
             className={`px-4 py-2 rounded-xl transition-all duration-200 hover:shadow-md ${
-              selectedDomain === 'operations' 
+              selectedDomain === 'risk-management' 
                 ? 'bg-white text-blue-600 shadow-md' 
                 : 'hover:bg-white/60 text-gray-700 hover:text-blue-600'
             }`}
@@ -90,6 +98,7 @@ export default function MainInterface() {
         {/* Right: Chat Interface */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 overflow-hidden">
           <ChatInterface domain={selectedDomain} />
+          <DomainAgent domain={selectedDomain} config={domainConfigs[selectedDomain]} />
         </div>
       </div>
     </div>

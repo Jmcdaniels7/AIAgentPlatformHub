@@ -1,4 +1,4 @@
-export type Domain = 'Risk Management' | 'operations';
+export type Domain = 'gateway' | 'risk-management' | 'operations';
 
 export type TaskType = 'email' | 'reschedule' | 'outreach' | 'reorder' | 'maintenance' | 'follow-up' | 'analysis';
 
