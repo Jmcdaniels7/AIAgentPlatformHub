@@ -14,7 +14,7 @@ Gather insights (APIs, vector DB, analytics)
    ↓
 Intermediate Task Created
    ↓
-Task Approved ✅
+Task Approved✅
    ↓
 Write-Only MCP Agents(paired to help execute API endpoints without writing logic in frontend)
    ↓
