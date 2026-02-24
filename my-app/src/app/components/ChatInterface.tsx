@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Domain, ChatMessage } from '../types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Bot, User } from 'lucide-react';
-import { saveMessage, getDomainConfig } from '@/app/utils/storage';
+import { clearMessages, saveMessage, getDomainConfig } from '@/app/utils/storage';
 import { generateAIResponse, generateTaskFromMessage } from '@/app/utils/ai';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -23,6 +22,11 @@ export function ChatInterface({ domain }: ChatInterfaceProps) {
   useEffect(() => {
     loadMessages();
   }, [domain]);
+
+  useEffect(() => {
+    clearMessages();
+    loadMessages();
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -98,7 +102,7 @@ export function ChatInterface({ domain }: ChatInterfaceProps) {
   const domainConfig = domain ? getDomainConfig(domain) : null;
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col min-h-0">
       {/* Chat Header */}
       <div className="bg-gradient-to-r from-slate-100 to-slate-200 border-b-2 border-slate-300 px-6 py-4 flex items-center justify-center shadow-sm">
         <div className="flex items-center gap-2">
@@ -110,7 +114,10 @@ export function ChatInterface({ domain }: ChatInterfaceProps) {
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 p-6 bg-gradient-to-br from-slate-50 to-slate-100" ref={scrollRef}>
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 overflow-y-auto p-6 bg-gradient-to-br from-slate-50 to-slate-100"
+      >
         <div className="space-y-4">
           {!domain ? (
             <div className="text-center py-16">
@@ -119,29 +126,30 @@ export function ChatInterface({ domain }: ChatInterfaceProps) {
               </div>
               <p className="text-lg font-medium text-gray-700">Select a domain to start chatting</p>
             </div>
-          ) : messages.length === 0 ? (
-            <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-2xl p-4 bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg border border-blue-400">
-                <p className="text-sm text-white">Hello, how can I assist you today?</p>
-              </div>
-            </div>
           ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl p-4 shadow-lg border ${
-                    message.role === 'user'
-                      ? 'bg-white border-gray-300 text-gray-900'
-                      : 'bg-gradient-to-r from-blue-500 to-indigo-500 border-blue-400 text-white'
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+            <>
+              <div className="flex justify-start">
+                <div className="max-w-[80%] rounded-2xl p-4 bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg border border-blue-400">
+                  <p className="text-sm text-white">Hello, how can I assist you today?</p>
                 </div>
               </div>
-            ))
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-2xl p-4 shadow-lg border ${
+                      message.role === 'user'
+                        ? 'bg-white border-gray-300 text-gray-900'
+                        : 'bg-gradient-to-r from-blue-500 to-indigo-500 border-blue-400 text-white'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                </div>
+              ))}
+            </>
           )}
           
           {isLoading && (
@@ -156,7 +164,7 @@ export function ChatInterface({ domain }: ChatInterfaceProps) {
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Input Area */}
       <div className="p-6 border-t-2 border-slate-300 bg-gradient-to-br from-slate-50 to-slate-100">

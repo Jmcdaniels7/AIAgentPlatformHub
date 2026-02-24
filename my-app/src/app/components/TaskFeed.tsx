@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Domain, Task } from '../types';
+import { getTasks } from '@/app/utils/storage';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { TaskCard } from './TaskCard';
 
 interface TaskFeedProps {
   domain: Domain | null;
@@ -10,12 +12,13 @@ interface TaskFeedProps {
 
 export function TaskFeed({ domain, onTaskStatusChange }: TaskFeedProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadTasks();
+    void loadTasks();
     
     const handleStorageChange = () => {
-      loadTasks();
+      void loadTasks();
     };
     
     window.addEventListener('storage', handleStorageChange);
@@ -27,45 +30,16 @@ export function TaskFeed({ domain, onTaskStatusChange }: TaskFeedProps) {
     };
   }, [domain]);
 
-  const loadTasks = () => {
-    const storedTasks = localStorage.getItem('ai-agent-tasks');
-    if (storedTasks) {
-      const allTasks: Task[] = JSON.parse(storedTasks);
-      const filtered = domain 
-        ? allTasks.filter(t => t.domain === domain)
-        : allTasks;
-      setTasks(filtered);
-    }
+  const loadTasks = async () => {
+    const allTasks = await getTasks();
+    const filtered = domain 
+      ? allTasks.filter(t => t.domain === domain)
+      : allTasks;
+    setTasks(filtered);
   };
 
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-700 border-red-200';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'low':
-        return 'bg-green-100 text-green-700 border-green-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'in-review':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'approved':
-        return 'bg-green-100 text-green-700 border-green-200';
-      case 'completed':
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-      case 'rejected':
-        return 'bg-red-100 text-red-700 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
+  const handleViewDetails = (task: Task) => {
+    setSelectedTaskId((current) => (current === task.id ? null : task.id));
   };
 
   return (
@@ -76,7 +50,7 @@ export function TaskFeed({ domain, onTaskStatusChange }: TaskFeedProps) {
       </div>
       
       <ScrollArea className="flex-1">
-        <div className="space-y-6 pr-4">
+        <div className="space-y-4 pr-4">
           {tasks.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
@@ -88,59 +62,50 @@ export function TaskFeed({ domain, onTaskStatusChange }: TaskFeedProps) {
               <p className="text-sm text-gray-500">Chat with the AI agent to generate tasks</p>
             </div>
           ) : (
-            tasks.map((task, index) => (
-              <div
-                key={task.id}
-                className="group relative bg-white rounded-2xl p-6 shadow-md border-2 border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all duration-200"
-              >
-                <div className="absolute top-4 right-4">
-                  <Badge variant="outline" className={getStatusColor(task.status)}>
-                    {task.status}
-                  </Badge>
-                </div>
-                
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="px-3 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 rounded-lg text-xs font-semibold">
-                      Output #{index + 1}
-                    </span>
-                    <Badge variant="outline" className="capitalize text-xs">
-                      {task.type.replace('-', ' ')}
-                    </Badge>
+            tasks.map((task) => (
+              <div key={task.id}>
+                <TaskCard
+                  task={task}
+                  onViewDetails={handleViewDetails}
+                  onStatusChange={onTaskStatusChange}
+                />
+                {selectedTaskId === task.id && (
+                  <div className="mt-3 rounded-2xl border-2 border-blue-200 bg-blue-50/60 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-sm font-semibold text-blue-900 mb-1">Task Details</h3>
+                        <p className="text-sm text-gray-800 font-medium">{task.title}</p>
+                        <p className="text-xs text-gray-600 mt-1">{task.description}</p>
+                        {task.details.recipient && (
+                          <p className="text-xs text-gray-600 mt-2">
+                            Recipient: {task.details.recipient}
+                          </p>
+                        )}
+                        {task.details.scheduledDate && (
+                          <p className="text-xs text-gray-600">
+                            Scheduled: {task.details.scheduledDate}
+                          </p>
+                        )}
+                        {typeof task.details.quantity === 'number' && task.details.quantity > 0 && (
+                          <p className="text-xs text-gray-600">
+                            Quantity: {task.details.quantity}
+                          </p>
+                        )}
+                        {task.details.notes && (
+                          <p className="text-xs text-gray-600 mt-2">Notes: {task.details.notes}</p>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedTaskId(null)}
+                        className="text-xs h-7"
+                      >
+                        Close
+                      </Button>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">
-                    {task.title}
-                  </h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {task.description}
-                  </p>
-                </div>
-
-                <div className="space-y-2 pt-4 border-t border-gray-100">
-                  {task.details.priority && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-gray-500">Priority:</span>
-                      <Badge variant="outline" className={getPriorityColor(task.details.priority)}>
-                        {task.details.priority}
-                      </Badge>
-                    </div>
-                  )}
-                  
-                  {task.details.recipient && (
-                    <div className="flex items-start gap-2">
-                      <span className="text-xs font-medium text-gray-500">Recipient:</span>
-                      <span className="text-xs text-gray-700">{task.details.recipient}</span>
-                    </div>
-                  )}
-                  
-                  {task.details.notes && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                      <p className="text-xs text-gray-700 italic">
-                        "{task.details.notes}"
-                      </p>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             ))
           )}
