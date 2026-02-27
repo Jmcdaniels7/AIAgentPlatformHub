@@ -1,6 +1,6 @@
 import { Domain, Task, TaskType } from '../types';
 import { addTask } from './storage';
-
+ 
 // Simulate AI processing and task generation
 export function generateTaskFromMessage(domain: Domain, userMessage: string): Task | null {
   const lowerMessage = userMessage.toLowerCase();
@@ -99,52 +99,99 @@ function determinePriority(message: string): 'low' | 'medium' | 'high' {
   return 'medium';
 }
 
-export function generateAIResponse(domain: Domain, userMessage: string): string {
+export async function generateAIResponse(domain: Domain, userMessage: string): Promise<{ immediate: string; final: string }> {
   const lowerMessage = userMessage.toLowerCase();
   const isRiskTopic = lowerMessage.includes('risk') || lowerMessage.includes('incident') || lowerMessage.includes('compliance') || lowerMessage.includes('audit') || lowerMessage.includes('security');
   const isOperationsTopic = lowerMessage.includes('schedule') || lowerMessage.includes('route') || lowerMessage.includes('inventory') || lowerMessage.includes('reorder') || lowerMessage.includes('dispatch') || lowerMessage.includes('warehouse') || lowerMessage.includes('delivery');
   
+  const sendMessage = async (message: string) => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/chat/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Backend error");
+      }
+
+      return await res.json();
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
   if (domain === 'gateway') {
+
+    const gatewayMessage = `Domain: ${domain} User Request: ${lowerMessage} Please tell me which agents to utilize`;
+    
+    //API logic sent to gateway with domain and lowerMessage variables to determine routing and response. 
+    // Gateway can respond with immediate feedback and then follow up with more detailed response after processing.
     if (isRiskTopic && isOperationsTopic) {
-      return "I can route this to both Risk Management and Operations. Please confirm if you want me to create tasks for both, or specify which area to prioritize.";
+      const immediate = "I can route this to both Risk Management and Operations Agents. I can draft a task for now, awaiting response from agents.";
+      const response = await sendMessage(gatewayMessage);
+      return { immediate, final: response?.response || immediate };
     }
     if (isRiskTopic) {
-      return "This sounds like a Risk Management request. I can delegate it to the Risk Management agent and draft a task. Do you want me to proceed?";
+      const immediate = "This sounds like a Risk Management request. I can draft a task for now, awaiting response from the Risk Management agent.";
+      const response = await sendMessage(gatewayMessage);
+      return { immediate, final: response?.response || immediate };
     }
     if (isOperationsTopic) {
-      return "This sounds like an Operations request. I can delegate it to the Operations agent and draft a task. Do you want me to proceed?";
+      const immediate = "This sounds like an Operations request. I can draft a task, awaiting response from the Operations agent....";
+      const response = await sendMessage(gatewayMessage);
+      return { immediate, final: response?.response || immediate };
     }
-    if (lowerMessage.includes('follow up')) {
+    /*if (lowerMessage.includes('follow up')) {
       return "I can route follow-ups to the appropriate agent. Is this about a risk/compliance issue or an operations/scheduling issue?";
     }
-    return "I'm not sure I can help with that. I'm the Logistics (Gateway) agent. Please tell me if this is a risk or an operations issue.";
+    */
+    const message = "I'm not sure I can help with that. I'm the Logistics (Gateway) agent. Please tell me if this is a risk or an operations issue.";
+    return { immediate: message, final: "" };
   }
   
   if (domain === 'risk-management') {
+     const riskManMessage = `Domain: ${domain} User Request: ${lowerMessage}`;
+
     if (isOperationsTopic && !isRiskTopic) {
-      return "That sounds like an Operations request. I can’t execute scheduling or inventory actions. Please switch to Operations or ask the Gateway agent to route it.";
+      const immediate = "That sounds like an Operations request. I can't execute scheduling or inventory actions. Please switch to Operations or ask the Gateway agent to route it.";
+      const response = await sendMessage(riskManMessage);
+      return { immediate, final: response?.response || immediate };
     }
     if (lowerMessage.includes('respond') || lowerMessage.includes('email')) {
-      return "I can draft risk-related communications (incident notices, compliance updates, mitigation plans). Share the details and audience.";
+      const immediate = "I can draft risk-related communications (incident notices, compliance updates, mitigation plans). Share the details and audience.";
+      const response = await sendMessage(riskManMessage);
+      return { immediate, final: response?.response || immediate };
     }
-    return "I'm not sure I can help with that. I handle risk analysis, compliance, incident response, and mitigation planning. Tell me the risk, impact, and desired outcome.";
+    const message = "I'm not sure I can help with that. I handle risk analysis, compliance, incident response, and mitigation planning. Tell me the risk, impact, and desired outcome.";
+    return { immediate: message, final: ""};
   }
   
   if (domain === 'operations') {
+    const operationsMessage = `Domain: ${domain} User Request: ${lowerMessage}`;
     if (isRiskTopic && !isOperationsTopic) {
-      return "That sounds like a Risk Management request. I can’t handle compliance or risk analysis. Please switch to Risk Management or ask the Gateway agent to route it.";
+      const immediate = "That sounds like a Risk Management request. I can't handle compliance or risk analysis. Please switch to Risk Management or ask the Gateway agent to route it.";
+      const response = await sendMessage(operationsMessage);
+      return { immediate, final: response?.response || immediate };
     }
     if (lowerMessage.includes('schedule')) {
-      return "I can create a scheduling task. Please share the date, time window, and stakeholders.";
+      const immediate = "I can create a scheduling task. Please share the date, time window, and stakeholders.";
+      const response = await sendMessage(operationsMessage);
+      return { immediate, final: response?.response || immediate };
     }
     if (lowerMessage.includes('reorder')) {
-      return "I can create a reorder task. Please share item, quantity, and target delivery date.";
+      const immediate = "I can create a reorder task. Please share item, quantity, and target delivery date.";
+      const response = await sendMessage(operationsMessage);
+      return { immediate, final: response?.response || immediate };
     }
-    return "I'm not sure I can help with that. I handle scheduling, inventory, routing, and operational coordination. Tell me what needs to be scheduled, reordered, or routed.";
+    const message = "I'm not sure I can help with that. I handle scheduling, inventory, routing, and operational coordination. Tell me what needs to be scheduled, reordered, or routed.";
+    return { immediate: message, final: "" };
   }
   
-  
-  
-  return "How can I assist you today?";
+  return { immediate: "How can I assist you today?", final: "" };
 }
 
