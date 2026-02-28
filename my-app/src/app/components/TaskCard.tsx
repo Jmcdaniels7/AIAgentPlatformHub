@@ -1,4 +1,4 @@
-import { Domain, Task } from '../types';
+import { Task, TaskStatus } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -36,7 +36,22 @@ const priorityColors = {
 };
 
 export function TaskCard({ task, onViewDetails, onStatusChange }: TaskCardProps) {
-  const Icon = taskTypeIcons[task.type] || Mail;
+  const getTaskIcon = (type: string) => {
+    if (type in taskTypeIcons) {
+      return taskTypeIcons[type as keyof typeof taskTypeIcons];
+    }
+    return Mail;
+  };
+
+  const isTaskStatus = (status: string): status is TaskStatus => {
+    return ['pending', 'in-review', 'approved', 'completed', 'rejected'].includes(status);
+  };
+
+  const getStatusColor = (status: string) => {
+    return isTaskStatus(status) ? statusColors[status] : 'bg-gray-500/10 text-gray-700 border-gray-500/20';
+  };
+
+  const Icon = getTaskIcon(task.type);
   const timeAgo = formatDistanceToNow(new Date(task.timestamp), { addSuffix: true });
 
   return (
@@ -50,18 +65,13 @@ export function TaskCard({ task, onViewDetails, onStatusChange }: TaskCardProps)
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex-1">
               <h3 className="font-medium text-sm mb-1">{task.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                {task.description}
-              </p>
             </div>
-            <Badge variant="outline" className={statusColors[task.status]}>
+            <Badge variant="outline" className={getStatusColor(task.status)}>
               {task.status}
             </Badge>
           </div>
           
           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3">
-            <span className="capitalize">{task.type.replace('-', ' ')}</span>
-            <span>•</span>
             <span>{timeAgo}</span>
             {task.details.priority && (
               <>
@@ -88,7 +98,7 @@ export function TaskCard({ task, onViewDetails, onStatusChange }: TaskCardProps)
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onStatusChange(task.id, 'approved')}
+                  onClick={() => onStatusChange(String(task.id), 'approved')}
                   className="text-xs h-7 text-green-600 border-green-600 hover:bg-green-50"
                 >
                   Approve
@@ -96,7 +106,7 @@ export function TaskCard({ task, onViewDetails, onStatusChange }: TaskCardProps)
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onStatusChange(task.id, 'rejected')}
+                  onClick={() => onStatusChange(String(task.id), 'rejected')}
                   className="text-xs h-7 text-red-600 border-red-600 hover:bg-red-50"
                 >
                   Reject
@@ -108,7 +118,7 @@ export function TaskCard({ task, onViewDetails, onStatusChange }: TaskCardProps)
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onStatusChange(task.id, 'completed')}
+                onClick={() => onStatusChange(String(task.id), 'completed')}
                 className="text-xs h-7"
               >
                 Mark Complete

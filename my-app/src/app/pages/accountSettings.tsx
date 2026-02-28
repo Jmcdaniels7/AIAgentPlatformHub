@@ -5,7 +5,7 @@ import { Task } from '../types';
 import { getTasks, getArchivedTasks, updateTaskStatus, domainConfigs, clearArchivedTasks } from '../utils/storage';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Domain } from '@/app/types';
+import type { TaskStatus } from '@/app/types';
 import {
   Table,
   TableBody,
@@ -15,7 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import Link from 'next/link';
-import { ArrowLeft, Download, Filter, Sparkles, Database, Home, Shield, Cog, ChevronDown } from 'lucide-react';
+import { Download, Filter, Sparkles, Database, Home, Shield, Cog, ChevronDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -58,10 +58,6 @@ export default function TaskTable() {
     setTasks(allTasks);
   };
 
-  //selected domain state is lifted to main interface to allow for consistent 
-  // filtering across both task feed and chat interface,
-  const [selectedDomain, setSelectedDomain] = useState<Domain>('gateway');
-
   const loadArchivedTasks = () => {
     const allArchived = getArchivedTasks();
     setArchivedTasks(allArchived);
@@ -90,8 +86,13 @@ export default function TaskTable() {
     setFilteredArchivedTasks(filterTasks(archivedTasks));
   };
 
-  const handleStatusChange = (taskId: string, newStatus: Task['status']) => {
-    updateTaskStatus(taskId, newStatus);
+  const isTaskStatus = (status: string): status is TaskStatus => {
+    return ['pending', 'in-review', 'approved', 'completed', 'rejected'].includes(status);
+  };
+
+  const handleStatusChange = (taskId: string | number, newStatus: string) => {
+    if (!isTaskStatus(newStatus)) return;
+    updateTaskStatus(String(taskId), newStatus);
     loadTasks();
   };
 
@@ -103,15 +104,45 @@ export default function TaskTable() {
 
   const exportToCSV = () => {
     const rowsSource = view === 'archived' ? filteredArchivedTasks : filteredTasks;
-    const headers = ['ID', 'Domain', 'Type', 'Title', 'Status', 'Priority', 'Timestamp'];
+    const headers = [
+      'ID',
+      'Domain',
+      'Type',
+      'Title',
+      'Description',
+      'Status',
+      'Timestamp',
+      'Priority',
+      'Read Gateway Response 1',
+      'Read Gateway Response 2',
+      'Read Risk Agent Response',
+      'Read Operations Agent Response',
+      'Write Gateway Agent Response 1',
+      'Write Gateway Response 2',
+      'Write Risk Agent Response',
+      'Write Operations Agent Response',
+      'Account ID',
+      'Details'
+    ];
     const rows = rowsSource.map(t => [
       t.id,
       t.domain,
       t.type,
       t.title,
+      t.description,
       t.status,
-      t.details.priority || 'N/A',
-      new Date(t.timestamp).toLocaleString()
+      new Date(t.timestamp).toLocaleString(),
+      t.priority || t.details.priority || 'N/A',
+      t.readgatewayresponse1 || '',
+      t.readgatewayresponse2 || '',
+      t.readriskagentresponse || '',
+      t.readopagentresponse || '',
+      t.writegatewayagentresponse1 || '',
+      t.writegatewayresponse2 || '',
+      t.writeriskagentresponse || '',
+      t.writeopagentresponse || '',
+      t.accountid || '',
+      JSON.stringify(t.details || {})
     ]);
     
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
@@ -129,6 +160,10 @@ export default function TaskTable() {
     approved: 'bg-green-500/10 text-green-700 border-green-500/20',
     completed: 'bg-gray-500/10 text-gray-700 border-gray-500/20',
     rejected: 'bg-red-500/10 text-red-700 border-red-500/20'
+  };
+
+  const getStatusColor = (status: string) => {
+    return isTaskStatus(status) ? statusColors[status] : 'bg-gray-500/10 text-gray-700 border-gray-500/20';
   };
 
   return (
@@ -334,54 +369,70 @@ export default function TaskTable() {
       {/* Table */}
       <div className="flex-1 overflow-auto p-8">
         <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-200 overflow-hidden">
+          <div className="w-full overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100">
+                <TableHead className="font-semibold">ID</TableHead>
                 <TableHead className="font-semibold">Domain</TableHead>
                 <TableHead className="font-semibold">Type</TableHead>
                 <TableHead className="font-semibold">Title</TableHead>
+                <TableHead className="font-semibold">Description</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Priority</TableHead>
                 <TableHead className="font-semibold">Timestamp</TableHead>
+                <TableHead className="font-semibold">Read Gateway 1</TableHead>
+                <TableHead className="font-semibold">Read Gateway 2</TableHead>
+                <TableHead className="font-semibold">Read Risk</TableHead>
+                <TableHead className="font-semibold">Read Ops</TableHead>
+                <TableHead className="font-semibold">Write Gateway 1</TableHead>
+                <TableHead className="font-semibold">Write Gateway 2</TableHead>
+                <TableHead className="font-semibold">Write Risk</TableHead>
+                <TableHead className="font-semibold">Write Ops</TableHead>
+                <TableHead className="font-semibold">Account ID</TableHead>
+                <TableHead className="font-semibold">Details</TableHead>
                 {view === 'active' && <TableHead className="font-semibold">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {(view === 'archived' ? filteredArchivedTasks : filteredTasks).length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={view === 'active' ? 7 : 6} className="text-center py-12 text-gray-500">
+                  <TableCell colSpan={view === 'active' ? 19 : 18} className="text-center py-12 text-gray-500">
                     {view === 'archived' ? 'No archived tasks found' : 'No tasks found'}
                   </TableCell>
                 </TableRow>
               ) : (
                 (view === 'archived' ? filteredArchivedTasks : filteredTasks).map((task) => (
                   <TableRow key={task.id} className="hover:bg-blue-50/50 transition-colors">
+                    <TableCell className="text-xs text-gray-700">{task.id}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <span>
-                          {domainConfigs.find(d => d.id === task.domain)?.icon}
+                          {domainConfigs.find(d => d.id === task.domain)?.icon || '•'}
                         </span>
-                        <span className="capitalize font-medium">{task.domain.replace('-', ' ')}</span>
+                        <span className="capitalize font-medium">{task.domain.toString().replace('-', ' ')}</span>
                       </div>
                     </TableCell>
                     <TableCell className="capitalize">
-                      {task.type.replace('-', ' ')}
+                      {task.type.toString().replace('-', ' ')}
                     </TableCell>
                     <TableCell className="max-w-xs">
-                      <div className="font-medium">{task.title}</div>
+                      <div className="font-medium line-clamp-1">{task.title}</div>
+                    </TableCell>
+                    <TableCell className="max-w-xs">
                       <div className="text-xs text-gray-500 line-clamp-1">
                         {task.description}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={statusColors[task.status]}>
+                      <Badge variant="outline" className={getStatusColor(task.status)}>
                         {task.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {task.details.priority ? (
+                      {(task.priority || task.details.priority) ? (
                         <Badge variant="outline" className="capitalize">
-                          {task.details.priority}
+                          {task.priority || task.details.priority}
                         </Badge>
                       ) : (
                         <span className="text-gray-400">-</span>
@@ -390,11 +441,21 @@ export default function TaskTable() {
                     <TableCell className="text-sm text-gray-600">
                       {new Date(task.timestamp).toLocaleString()}
                     </TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[180px] truncate">{task.readgatewayresponse1 || '-'}</TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[180px] truncate">{task.readgatewayresponse2 || '-'}</TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[180px] truncate">{task.readriskagentresponse || '-'}</TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[180px] truncate">{task.readopagentresponse || '-'}</TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[180px] truncate">{task.writegatewayagentresponse1 || '-'}</TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[180px] truncate">{task.writegatewayresponse2 || '-'}</TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[180px] truncate">{task.writeriskagentresponse || '-'}</TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[180px] truncate">{task.writeopagentresponse || '-'}</TableCell>
+                    <TableCell className="text-xs text-gray-600">{task.accountid || '-'}</TableCell>
+                    <TableCell className="text-xs text-gray-600 max-w-[260px] truncate">{JSON.stringify(task.details || {})}</TableCell>
                     {view === 'active' && (
                       <TableCell>
                         <Select
-                          value={task.status}
-                          onValueChange={(value) => handleStatusChange(task.id, value as Task['status'])}
+                          value={isTaskStatus(task.status) ? task.status : 'pending'}
+                          onValueChange={(value) => handleStatusChange(task.id, value)}
                         >
                           <SelectTrigger className="w-[130px] h-8 text-xs border-2">
                             <SelectValue />
@@ -414,6 +475,7 @@ export default function TaskTable() {
               )}
             </TableBody>
           </Table>
+          </div>
         </div>
       </div>
     </div>

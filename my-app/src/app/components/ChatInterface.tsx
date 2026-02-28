@@ -74,12 +74,12 @@ export function ChatInterface({ domain }: ChatInterfaceProps) {
     const task = generateTaskFromMessage(domain, userMessage);
     
     // Generate AI response
-    const aiResponse = generateAIResponse(domain, userMessage);
+    const aiResponse = await generateAIResponse(domain, userMessage);
     
     saveMessage({
       domain,
       role: 'assistant',
-      content: aiResponse
+      content: aiResponse.final || aiResponse.immediate
     });
 
     loadMessages();

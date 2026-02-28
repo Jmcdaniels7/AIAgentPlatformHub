@@ -5,13 +5,23 @@ export type TaskType = 'email' | 'reschedule' | 'outreach' | 'reorder' | 'mainte
 export type TaskStatus = 'pending' | 'in-review' | 'approved' | 'completed' | 'rejected';
 
 export interface Task {
-  id: string;
-  domain: Domain;
-  type: TaskType;
+  id: string | number;
+  domain: Domain | string;
+  type: TaskType | string;
   title: string;
   description: string;
-  status: TaskStatus;
+  status: TaskStatus | string;
   timestamp: string;
+  priority?: string | null;
+  readgatewayresponse1?: string | null;
+  readgatewayresponse2?: string | null;
+  readriskagentresponse?: string | null;
+  readopagentresponse?: string | null;
+  writegatewayagentresponse1?: string | null;
+  writegatewayresponse2?: string | null;
+  writeriskagentresponse?: string | null;
+  writeopagentresponse?: string | null;
+  accountid?: string;
   details: {
     recipient?: string;
     scheduledDate?: string;
